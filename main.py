@@ -23,19 +23,20 @@ sql_questao = """
                 );
                 """
 sql_assunto = """
-				CREATE TABLE IF NOT EXISTS assuntos (
+    			CREATE TABLE IF NOT EXISTS assuntos (
                     id integer PRIMARY KEY,
                     questao_id integer NOT NULL,
                     texto text NOT NULL,
                     FOREIGN KEY (questao_id) REFERENCES questoes (id)
                 );
-				"""
+    			"""
 sql_textos = """
                 CREATE TABLE IF NOT EXISTS textos (
                     id integer PRIMARY KEY,
                     texto text NOT NULL,
                     fonte text,
                     questao_id integer,
+                    image bool default 0,
                     FOREIGN KEY (questao_id) REFERENCES questoes (id)
                 );
                 """
@@ -85,6 +86,7 @@ if __name__ == '__main__':
     anos = list(range(primeiroEnem, ultimoAno + 1))[::-1]
     for ano in anos:
     	url = "https://descomplica.com.br/gabarito-enem/questoes/{}/".format(ano)
+    	print(url)
     	opener = build_opener()
     	opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
     	questoes = []
@@ -95,11 +97,33 @@ if __name__ == '__main__':
     	else:
     		HTML = BeautifulSoup(request.read(), "html.parser")
     		for questao in HTML.select("#main-content > div.questions-gallery > div.gallery a"):
-    			nome = questao.select("div > div.info > div.label")
-    			nome = re.sub("\D", "", (nome[0].text.strip()))
-    			if(nome != ""):
-    				questoes.append(questao.get("href"))
-    		print(questoes)
-    		print(len(questoes))
-
+    			numero = questao.select("div > div.info > div.label")
+    			numero = re.sub("\D", "", (numero[0].text.strip()))
+    			if(numero != ""):
+        			questoes.append([questao.get("href"), numero])
+    		for questao in questoes:
+    			print(questao)
+    			numero = questao[1]
+    			link = questao[0]
+    			request = opener.open(link, timeout = 60)
+    			HTML = BeautifulSoup(request.read(), "html.parser")
+    			comentario = HTML.select("#single-question > div.single-wrapper > div.comments > div.text > p")[0].text.strip()
+    			resposta = HTML.select("#single-question > div.single-wrapper > div.question-info > div.answer > p")[0].text.strip()
+    			enunciado = HTML.select("#single-question > div.single-wrapper > div.enunciation > p")[0].text.strip()
+    			alternativas = []
+    			for alternativa in HTML.select("#single-question > div.single-wrapper > ol > li"):
+    				alternativas.append(alternativa.text)
+    			assuntos = []
+    			for assunto in HTML.select("#single-question > div.single-wrapper > div.question-info > div.subjects > p"):
+    				assuntos.append(assunto.text)
+    			textos = []
+    			for texto in HTML.select("#single-question > div.highlight > div.cont-list > div"):
+    				if(texto.get("class")[0] == "text"):
+    					if(texto.select(".cont")[0].text != ""):
+    						textos.append([texto.select(".cont")[0].text, 0])
+    					if(texto.select(".source")[0].text != ""):
+    						textos.append([texto.select(".source")[0].text, 0])
+    				else:
+    					textos.append([texto.select("div > img")[0].get("src"), 1])	
+    		print(textos)
     desconectar(conn)
