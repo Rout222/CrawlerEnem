@@ -58,16 +58,16 @@ class Questao(object):
 				print("{} time out, tentando novamente".format(self.link))
 			else:
 				html = BeautifulSoup(request.read(), "html.parser")
-				self.comentario = html.select("#single-question > div.single-wrapper > div.comments > div.text > p")[0].text.strip()
-				resposta   		= html.select("#single-question > div.single-wrapper > div.question-info > div.answer > p")[0].text.strip()
 				try:
-					self.enunciado  = html.select("#single-question > div.single-wrapper > div.enunciation > p")[0].text.strip()
+					self.comentario = html.select("#single-question > div.single-wrapper > div.comments > div.text > p")[0].text.strip()
 				except Exception as e:
-					try:
-						self.enunciado  = html.select("#single-question > div.single-wrapper > div.enunciation > div")[0].text.strip()
-					except Exception as e:
-						self.enunciado 	= html.select("#single-question > div.highlight > div.enunciation > p")[0].text.strip()
+					self.comentario = ""
+				resposta   		    = html.select("div.answer > p")[0].text.strip()
+				try:
+					self.enunciado  = html.select("div.enunciation")[0].text.strip()
+				except Exception as e:
+					pass
 				self.numero		= re.sub("\D", "", (html.select("#single-question > div.highlight > h1")[0].text.strip()))
 				self.fazerAlternativas(html.select("#single-question > div.single-wrapper > ol > li"), resposta)
 				self.fazerAssuntos(html.select("#single-question > div.single-wrapper > div.question-info > div.subjects > p"))
-				self.fazerTextos(html.select("#single-question > div.highlight > div.cont-list > div"))
+				self.fazerTextos(html.select("div.enunciation"))

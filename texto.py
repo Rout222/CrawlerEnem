@@ -12,7 +12,7 @@ class Texto(Printavel):
 			except Exception as e:
 				pass
 		elif(texto.get("class")[0] == "enunciation"):
-			self.texto = texto.p.text
+			self.texto = texto.text
 		else:
 			self.imagem = True
 			self.texto = texto.select("div > img")[0].get("src")
