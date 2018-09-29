@@ -19,7 +19,7 @@ class Texto(Printavel):
 
 	def __repr__(self):
 		if(not(self.imagem)):
-			return self.texto + self.fonte
+			return self.texto
 		else:
 			return super(Texto, self).__repr__()
 

@@ -19,6 +19,7 @@ class Questao(object):
 		self.salvar(ano_id)
 
 	def salvar(self, ano_id):
+		return ''
 		conn = conectar()
 		c = conn.cursor()
 		c.execute("INSERT INTO questoes(numero, ano_id, comentario, enunciado) VALUES (?,?,?,?)", (self.numero, ano_id, self.comentario, self.enunciado))
