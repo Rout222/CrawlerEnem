@@ -1,31 +1,11 @@
-link = "https://descomplica.com.br/gabarito-enem/questoes/2017/primeiro-dia/take-car-just-anyplace-oil-change-may-regret-road-nesse-texto-publi/?cor=azul"
-numero = 5
-import sqlite3
-from sqlite3 import Error
-from urllib.request import urlopen,build_opener
-from bs4 import BeautifulSoup
+from questao import Questao
+from bloco import Bloco
+from bs4 import BeautifulSoup, element
 import re
 
-opener = build_opener()
-opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-request = opener.open(link, timeout = 60)
-HTML = BeautifulSoup(request.read(), "html.parser")
-comentario = HTML.select("#single-question > div.single-wrapper > div.comments > div.text > p")[0].text.strip()
-resposta = HTML.select("#single-question > div.single-wrapper > div.question-info > div.answer > p")[0].text.strip()
-enunciado = HTML.select("#single-question > div.single-wrapper > div.enunciation > p")[0].text.strip()
-alternativas = []
-for alternativa in HTML.select("#single-question > div.single-wrapper > ol > li"):
-	alternativas.append(alternativa.text)
-assuntos = []
-for assunto in HTML.select("#single-question > div.single-wrapper > div.question-info > div.subjects > p"):
-	assuntos.append(assunto.text)
-textos = []
-for texto in HTML.select("#single-question > div.highlight > div.cont-list > div"):
-	if(texto.get("class")[0] == "text"):
-		if(texto.select(".cont")[0].text != ""):
-			textos.append([texto.select(".cont")[0].text, 0])
-		if(texto.select(".source")[0].text != ""):
-			textos.append([texto.select(".source")[0].text, 0])
-	else:
-		textos.append([texto.select("div > img")[0].get("src"), 1])	
-print(textos)
+link1 = "https://descomplica.com.br/gabarito-enem/questoes/2017/primeiro-dia/no-dia-em-que-foram-colhidos-os-dados-meteorologicos-apresentados-qual-fator-climatico-foi/?cor=azul"
+link2 = "https://descomplica.com.br/gabarito-enem/questoes/2017/segundo-dia/toxicidade-de-algumas-substancias-e-normalmente-representada-por-um-indice-conhecido-como-dl50/?cor=azul"
+link3 = "https://descomplica.com.br/gabarito-enem/questoes/2017/primeiro-dia/o-consumidor-seculo-xxi-chamado-de-novo-consumidor-social-tende-se-comportar-modo/?cor=azul"
+link4 = "https://descomplica.com.br/gabarito-enem/questoes/2017/primeiro-dia/para-algunos-hombres-el-virus-del-papiloma-humano-hpv-es-algo-muy-lejano-se-olvidan/?cor=azul"
+a = Questao(link1, 1)
+print(a)

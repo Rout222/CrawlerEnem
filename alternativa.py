@@ -1,4 +1,6 @@
 from printavel import Printavel
+from bloco import Bloco
+
 class Alternativa(Printavel):
 	"""docstring for alternativa"""
 	def __init__(self, alternativa, letra, resposta):

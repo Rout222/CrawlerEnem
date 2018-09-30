@@ -1,18 +1,52 @@
 from printavel import Printavel
 from imagem import Imagem
-class Blocos(Printavel):
-	"""docstring for Blocos"""
-	def __init__(self, texto, fonte, imagem):
-		super(Blocos, self).__init__()
+class Bloco(Printavel):
+	"""docstring for Bloco"""
+	def __init__(self, texto, fonte, imagem, titulo):
+		super(Bloco, self).__init__()
 		self.texto = texto
 		self.fonte = fonte
 		self.imagem = imagem
-		if imagem > 0:
+		self.titulo = titulo
+		if imagem:
 			self.img    = Imagem(texto)
 
 	def __repr__(self):
-		return "Este bloco é uma imagem com o link " + self.texto
-teste = Blocos("https://d2q576s0wzfxtl.cloudfront.net/2017/11/08151500/questao03.ing_.enem-2017.png", False, True)
-print(teste)
+		if self.imagem:
+			return "(imagem) " + self.texto
+		elif self.fonte:
+			return "(fonte) " + self.texto
+		elif self.titulo:
+			return "(titulo) " + self.texto
+		else:
+			return "(texto) " + self.texto
 
-		
+	def save(self):
+		return """
+			INSERT INTO `cicigugu`.`blocks` (
+			        `text`,
+			        `block_type_id`
+			)
+			VALUES
+		        (
+		                ?,
+		                ?
+		        );
+		"""
+	def valores(self):
+		t = 1
+		if self.imagem:
+			t = 2
+		elif self.fonte:
+			t = 3
+		elif self.titulo:
+			t = 4
+		return (self.texto, t)
+
+	def salvarImagem(self):
+		if(self.imagem):
+			return self.img.salvar()
+
+	def valoresImagem(self, id_bloco):
+		if(self.imagem):
+			return self.img.valores(id_bloco)
