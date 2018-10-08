@@ -21,6 +21,8 @@ class Questao(object):
 	def __repr__(self):
 		return """
 (Questao) com
+\t Link
+\t\t {}
 \t Blocos
 \t\t {}
 \t Enunciado
@@ -29,26 +31,29 @@ class Questao(object):
 \t\t {}
 \t Assuntos
 \t\t {}
-		""".format(self.blocks, self.enunciado, self.alternativas, self.assuntos)
+		""".format(self.link, self.blocks, self.enunciado, self.alternativas, self.assuntos)
 
 	def fazerEnunciado(self, div):
 		return div.text
 
 	def salvar(self, ano_id):
-		return ''
 		conn = conectar()
 		c = conn.cursor()
-		c.execute("INSERT INTO questoes(numero, ano_id, comentario, enunciado) VALUES (?,?,?,?)", (self.numero, ano_id, self.comentario, self.enunciado))
+		c.execute("INSERT INTO `cicigugu`.`questions` ( `number`, `comment`, `enunciation`, `year_id`, `theme_id`, `question_group_id` ) VALUES ( %s, %s, %s, %s, 1, 1 );", (self.numero, self.comentario, self.enunciado, ano_id))
 		questao_id = c.lastrowid
-		blocksinseridos = []
 		for tex in self.blocks:
-			c.execute(tex.salvar(), tex.valores())
-			b_id = c.lastrowid
-			if(tex.imagem):
-				c.execute(tex.salvarImagem(), tex.valoresImagem(b_id))
-			c.execute("INSERT INTO `cicigugu`.`blocks_questions` (`block_id`, `question_id`) VALUES (?,?);", (questao_id, b_id))
+			blockid = tex.salver(questao_id)
+			c.execute("INSERT INTO `cicigugu`.`blocks_questions` (`block_id`, `question_id`) VALUES (%s,%s);", (blockid, questao_id))
 		for alt in self.alternativas:
-			c.execute(alt.salvar(), alt.valores(questao_id))
+			altid = alt.salvar(questao_id)
+		for assunto in self.assuntos:
+			c.execute("SELECT `id` FROM `cicigugu`.`block_types` WHERE `title` =  '{}';".format(self.valor))
+			idtype = c.fetchone()
+			if(idtype):
+				idtype = idtype[0]
+			else:
+				c.execute("INSERT INTO `cicigugu`.`block_types` (`title`) VALUES ('{}');".format(self.valor))
+				idtype = c.lastrowid
 		conn.commit()
 		desconectar(conn)
 
@@ -65,24 +70,34 @@ class Questao(object):
 	def fazerBlocks(self, div):
 		for block in div.children:
 			if(type(block) == element.Tag):
-				if(block["class"] == ["image-wrapper"]):
-					self.blocks.append(Bloco(block.div.img["src"], False, True, False))
-				if(block["class"] == ["text"]):
+				if(block.get("class") == ["image-wrapper"]):
+					self.blocks.append(Bloco(block.div.img["src"], True, "imagem"))
+				elif(block.get("class") in [["text"]]):
 					for text in block.children:
 						if(type(text) == element.Tag):
-							if(text["class"] == ["source"]):
-								self.blocks.append(Bloco(text.text.strip(), True, False, False))
-							elif(text["class"] == ["cont"]):
+							if(text.get("class") == ["source"]):
+								self.blocks.append(Bloco(text.text.strip(), True, "fonte"))
+							elif(text.get("class") == ["cont"]):
 								for t in text.children:
 									if(type(t) == element.Tag):
 										if(len(t.text) > 0):
 											if (t.get("style") == "text-align: center;"):
-												self.blocks.append(Bloco(t.text, False, False, True))
+												self.blocks.append(Bloco(t.text, True, "titulo"))
 											else:
-												self.blocks.append(Bloco(t.text, False, False, False))
+												self.blocks.append(Bloco(t.text))
+				elif(block.get("class") in [["enunciation"]]):
+					for text in block.children:
+						if(type(text) == element.Tag):
+							self.blocks.append(Bloco(text.text))
+				elif(block.name == 'p'):
+					for x in block.children:
+						if(type(x) == element.Tag):
+							self.blocks.append(Bloco(x.text, True, x.name))
+						else:
+							self.blocks.append(Bloco(x))
 
-							else:
-								raise BaseException
+				else:
+					print("Tipo desconhecido {}".format(block.get("class")))
 
 	def fazerConexao(self):
 		conseguiu = False
@@ -102,10 +117,13 @@ class Questao(object):
 					self.comentario = ""
 				resposta   		    = html.select("div.answer > p")[0].text.strip()
 				try:
-					self.enunciado  = self.fazerEnunciado(html.select("div.enunciation")[0])
+					self.enunciado  = self.fazerEnunciado(html.select("#single-question > div.single-wrapper > div.enunciation")[0])
 				except Exception as e:
 					self.enunciado = ""
 				self.numero		= re.sub("\D", "", (html.select("#single-question > div.highlight > h1")[0].text.strip()))
 				self.fazerAlternativas(html.select("#single-question > div.single-wrapper > ol > li"), resposta)
 				self.fazerAssuntos(html.select("#single-question > div.single-wrapper > div.question-info > div.subjects > p"))
-				self.fazerBlocks(html.select("#single-question > div.highlight > div.cont-list")[0])
+				for b in html.select("#single-question > div.highlight")[0]:
+					if(type(b) == element.Tag):
+						if(b.get("id") == None and b.get("class") not in [['question-number']]):
+							self.fazerBlocks(b)
